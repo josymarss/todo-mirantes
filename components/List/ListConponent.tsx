@@ -13,6 +13,7 @@ type Props = {
   onRemove: () => void;
   onFinish: () => void;
   onUpdate: () => void;
+  onEdited:() => void;
   eventName: string;
   done: string[];
 };
@@ -23,6 +24,7 @@ export function ListComponent({
   eventName,
   done,
   onUpdate,
+  onEdited
 }: Props) {
   return (
     <View style={styles.container}>
@@ -42,6 +44,7 @@ export function ListComponent({
           </Text>
         </View>
       </TouchableOpacity>
+      <Ionicons name="ios-pencil-sharp" size={24} color="#808080" onPress={() => {onUpdate(); onEdited() } } />
       <Ionicons name="trash" size={24} color="#808080" onPress={onRemove} />
     </View>
   );
