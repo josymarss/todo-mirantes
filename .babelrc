@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    [
+      "module-resolver",
+      {
+        "root":["./src"],
+        "alias": {
+          "components": "./src/components",
+          "storage": "./src/storage",
+          "firebaseconfig": "./src/firebaseconfig",
+          "assets": "./src/assets",
+          "types": "./src/types",
+          "app": "./src/app"
+
+        }
+      }
+    ]
+  ]
+}
