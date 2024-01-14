@@ -1,4 +1,3 @@
-##Teste para Desenvolvedor React Native
 
 ###Instruções 
 
