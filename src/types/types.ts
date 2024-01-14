@@ -1,6 +1,6 @@
 interface dataProps {
   id?: string;
-  title: string;
+  title?: string;
   description?: string;
   done?: boolean;
 }

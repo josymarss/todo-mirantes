@@ -1,18 +1,17 @@
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { Home } from 'components/Home/Home';
+import { StatusBar } from "expo-status-bar";
+import { View } from "react-native";
+import { Provider } from "react-redux";
+import { store } from "app/store";
+
+import { Home } from "components/Home/Home";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <StatusBar translucent style='light'/>
-      <Home />
-    </View>
+    <Provider store={store}>
+      <View style={{ flex: 1 }}>
+        <StatusBar translucent style="light" />
+        <Home />
+      </View>
+    </Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

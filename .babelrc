@@ -9,7 +9,9 @@
           "storage": "./src/storage",
           "firebaseconfig": "./src/firebaseconfig",
           "assets": "./src/assets",
-          "types": "./src/types"
+          "types": "./src/types",
+          "app": "./src/app"
+
         }
       }
     ]

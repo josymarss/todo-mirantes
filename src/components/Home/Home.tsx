@@ -1,4 +1,3 @@
-import "react-native-get-random-values";
 import { useEffect, useState, useCallback } from "react";
 import * as Network from "expo-network";
 import {
@@ -10,7 +9,7 @@ import {
   Button,
   FlatList,
   Alert,
-  RefreshControl
+  RefreshControl,
 } from "react-native";
 
 import {
@@ -20,29 +19,38 @@ import {
 } from "firebaseconfig/operations";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import { fireStore } from "firebaseconfig/config";
+import { useSelector, useDispatch } from "react-redux";
+import { RootType } from "app/store";
 
 import { styles } from "./styles";
 import { ListComponent } from "components/List/ListConponent";
 import { EmptyList } from "components/Empty/EmptyList";
 import { addTodoOnStorage, getTodoOnStorage } from "storage/todos/todos";
 import { dataProps } from "types/types";
+import { addTodo, updateTodo ,deleteTodo } from "app/reducers/todoslice";
 
 export function Home() {
+  // redux
+  const reduxTodos = useSelector((state: RootType) => state.todo.value);
+  // console.log("Redux done", reduxTodos);
+  const dispatch = useDispatch();
+
   const [events, setEvent] = useState<any[]>([]);
-  const [copy, setEventCopy] = useState<any[]>([]);
   const [finished, setFinished] = useState<string[]>([]);
   const [eventName, setEventName] = useState("");
   const [eventDoc, setEventDoc] = useState<dataProps | null>();
   const [edited, setEdited] = useState(false);
+  const [complete, setCompleted]= useState<number>();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   function setHandleEvent(value: string) {
     setEventName(value);
   }
 
   async function handleAddEvent() {
-    const task = events.filter(item => item.title == eventName);
+    const task = events.filter((item) => item.title == eventName);
 
-    if (task.length!=0 && !edited) {
+    if (task.length != 0 && !edited) {
       return Alert.alert("Esta tarefa já existe, tente edita-la!");
     }
     if (eventName.length == 0) {
@@ -51,27 +59,23 @@ export function Home() {
     if (edited) {
       try {
         const ref = doc(fireStore, `todos/${eventDoc?.id}`);
-
         await updateOnDatabase(ref, {
-          ...eventDoc,
           title: eventName,
         });
-        
       } catch (error) {
         throw new Error(`This error occured ${error}`);
       }
-      
+
       Alert.alert("Tarefa actualizada com sucesso!");
       // update data on ui
       await getEventFromDataBase();
+      setRefreshing(false);
       // update data on storage
       await addTodoOnStorage(events);
 
       setEventName("");
       setEdited(false);
       setEventDoc(null);
-      
-      setRefreshing(true);
     } else {
       // Add to database
       await addToDatabase({
@@ -80,43 +84,44 @@ export function Home() {
           "Event inserted, and this is the description for that jus for testing",
         done: false,
       });
+
       Alert.alert("Tarefa criada com sucesso!");
 
       // update data on ui
       await getEventFromDataBase();
+      setRefreshing(false);
       // update data on storage
-      await addTodoOnStorage(
-        events
-      );
+      await addTodoOnStorage(events);
 
       setEventName("");
-      setRefreshing(true);
     }
   }
   // Update state's task
   async function handleFinished(item: dataProps) {
     const ref = doc(fireStore, `todos/${item?.id}`);
 
-   try{
-    await updateOnDatabase(ref, {
-      ...item,
-      done: !item.done,
-    });
-   }catch(error){
+    try {
+      await updateOnDatabase(ref, {
+        ...item,
+        done: !item.done,
+      });
+    } catch (error) {
       throw new Error(`This error occured: ${error}`);
-   }
+    }
 
     Alert.alert("Estado da tarefa, actualizado com sucesso!");
-
+    
     await getEventFromDataBase();
     // update data on storage
-    await addTodoOnStorage(
-      events
-    );
+    await addTodoOnStorage(events);
+
+    const complete = events && events.filter((event) => event.done == true);
+    setCompleted(complete?.length);
+    console.log(complete?.length);
   }
 
   function handleUpdate(item: dataProps) {
-    setEventName(item.title);
+    setEventName(item?.title!);
   }
 
   async function handleRemove(item: any) {
@@ -129,8 +134,14 @@ export function Home() {
           onPress: async () => {
             const ref = doc(fireStore, `todos/${item?.id}`);
             await removeOnDatabase(ref);
+            // // update data on ui
             await getEventFromDataBase();
+            setRefreshing(false);
+            // // update data on storage
+            await addTodoOnStorage(events);
             Alert.alert("Tarefa apagada com sucesso!");
+            const complete = events && events.filter((event) => event.done == true);
+            setCompleted(complete?.length);
           },
         },
         {
@@ -139,7 +150,6 @@ export function Home() {
         },
       ]
     );
-
   }
 
   async function getEventFromDataBase() {
@@ -148,6 +158,7 @@ export function Home() {
 
     const subscriber = onSnapshot(todoRef, {
       next: (snapShot) => {
+        console.log('Snapshot geted', snapShot.docs.every);
         snapShot.docs.forEach((doc) => {
           todos.push({
             id: doc.id,
@@ -158,6 +169,7 @@ export function Home() {
       },
     });
 
+    setRefreshing(true);
     return () => subscriber();
   }
 
@@ -170,6 +182,8 @@ export function Home() {
       setEvent(await getTodoOnStorage());
     }
     getData();
+    const complete = events && events.filter((event) => event.done == true);
+    setCompleted(complete?.length);
   }, []);
 
   return (
@@ -201,17 +215,17 @@ export function Home() {
           <View style={styles.detailsStatus}>
             <Text style={styles.textTwo}>Concluidos</Text>
             <View style={styles.detail}>
-              <Text>{finished && finished.length}</Text>
+              <Text>{complete && complete}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.list}>
           <FlatList
-            extraData={events}
-            data={events && events}
-            // onRefresh={() => refreshing}
-            keyExtractor={(item) => item.id}
+            // extraData={events}
+            data={events?events:[]}
+            refreshing={refreshing}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <ListComponent
                 done={item.done}
